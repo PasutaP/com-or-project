@@ -60,9 +60,33 @@ function handlePostback(event) {
         case 'AIR':
             return handleAirController(data, userId)
         case 'LIGHT':
-            return null
+            return handleLightContrtoller(data, userId)
     }
     return null
+}
+
+async function handleLightContrtoller(data, userId) {
+    const userRef = db.ref('users')
+    const userSnapshot = await userRef.child(userId).once("value")
+    const roomKey = userSnapshot.val().roomKey
+    const roomRef = db.ref('rooms').child(roomKey)
+    const status = data.status
+    switch(data.room) {
+        case 'BATHROOM': {
+            await roomRef.child('bathroomLightStatus').transaction(currentStatus => status === "ON" ? true : false)
+            break
+        }
+        case 'BEDROOM': {
+            await roomRef.child('bathroomLightStatus').transaction(currentStatus => status === "ON" ? true : false)
+            break
+        }
+    }
+    // const roomSnapshot = roomRef.once("value")
+    const msg = {
+        type: 'text',
+        text: `Room: ${data.room}\nStatus: ${data.status}`
+    }
+    return client.pushMessage(userId, msg)
 }
 
 async function handleAirController(data, userId) {
@@ -147,6 +171,7 @@ exports.richMenuList = functions.https.onRequest((req, res) => {
 })
 
 exports.unlockSuccess = functions.database.ref('rooms/{roomKey}/doorStatus').onUpdate(async (change, context) => {
+    console.log("Triggered")
     if (change.before.exists()) {
         return null;
     }
@@ -165,6 +190,3 @@ exports.unlockSuccess = functions.database.ref('rooms/{roomKey}/doorStatus').onU
     await client.pushMessage(userId, {type: "text", text: `Door Status: Hello World`})
     return Promise.resolve("Done")
 })
-
-
-
