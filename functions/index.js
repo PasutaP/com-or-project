@@ -47,22 +47,199 @@ function handleEvent(event) {
     }
 }
 
-function handlePostback(event) {
+async function handlePostback(event) {
     var data = url.parse('?' + event.postback.data, true).query
     console.log(data)
     const userId = event.source.userId
     console.log(userId)
     switch (data.action) {
-        case 'RICHMENU':
+        case 'RICHMENU': {
             return handleNavigation(data.menu, userId)
-        case 'DOOR_UNLOCK':
+        }
+        case 'DOOR_UNLOCK': {
             return handleDoorUnlock(userId)
-        case 'AIR':
+        }
+        case 'AIR': {
             return handleAirController(data, userId)
-        case 'LIGHT':
+        }
+        case 'LIGHT': {
             return handleLightContrtoller(data, userId)
+        }
     }
     return null
+}
+
+async function sendStatusMessage(menu, roomKey) {
+    const roomRef = db.ref('rooms').child(roomKey)
+    const roomSnapshot = await roomRef.once("value")
+    switch (menu) {
+        case 'AIR_CONTROLLER': {
+            const temp = roomSnapshot.val().temp
+            const status = roomSnapshot.val().airStatus
+            const msg = {
+                "type": "flex",
+                "altText": "Flex Message",
+                "contents": {
+                    "type": "bubble",
+                    "direction": "ltr",
+                    "hero": {
+                        "type": "image",
+                        "url": "https://firebasestorage.googleapis.com/v0/b/seniority-line-bot.appspot.com/o/flex-messages-pics%2FHomeless-06.png?alt=media&token=58776d7e-375d-41f2-b861-4413bec4f479",
+                        "size": "full",
+                        "aspectRatio": "20:13",
+                        "aspectMode": "cover"
+                    },
+                    "body": {
+                        "type": "box",
+                        "layout": "vertical",
+                        "spacing": "md",
+                        "contents": [
+                            {
+                                "type": "box",
+                                "layout": "vertical",
+                                "spacing": "sm",
+                                "contents": [
+                                    {
+                                        "type": "text",
+                                        "text": "Air Conditioner",
+                                        "size": "xxl",
+                                        "align": "start",
+                                        "gravity": "top",
+                                        "weight": "bold",
+                                        "color": "#2D2926"
+                                    },
+                                    {
+                                        "type": "box",
+                                        "layout": "baseline",
+                                        "contents": [
+                                            {
+                                                "type": "text",
+                                                "text": "Temperature",
+                                                "margin": "sm",
+                                                "weight": "bold"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "text": `${temp}℃`,
+                                                "size": "sm",
+                                                "align": "end",
+                                                "color": "#E08E60"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "box",
+                                        "layout": "baseline",
+                                        "contents": [
+                                            {
+                                                "type": "text",
+                                                "text": "Status",
+                                                "flex": 0,
+                                                "margin": "sm",
+                                                "weight": "bold"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "text": `${status ? "ON" : "OFF"}`,
+                                                "size": "sm",
+                                                "align": "end",
+                                                "color": "#E08E60"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+            return client.pushMessage(roomSnapshot.val().user, msg)            
+        }
+        case 'LIGHT_CONTROLLER': {
+            const msg = {
+                "type": "flex",
+                "altText": "Flex Message",
+                "contents": {
+                    "type": "bubble",
+                    "hero": {
+                        "type": "image",
+                        "url": "https://firebasestorage.googleapis.com/v0/b/seniority-line-bot.appspot.com/o/flex-messages-pics%2FHomeless-07.png?alt=media&token=4db4b8a7-e74e-44f8-99e3-67d443d7fdd3",
+                        "margin": "none",
+                        "size": "full",
+                        "aspectRatio": "20:13",
+                        "aspectMode": "cover",
+                        "action": {
+                            "type": "uri",
+                            "label": "Action",
+                            "uri": "https://linecorp.com"
+                        }
+                    },
+                    "body": {
+                        "type": "box",
+                        "layout": "vertical",
+                        "spacing": "md",
+                        "contents": [
+                            {
+                                "type": "box",
+                                "layout": "vertical",
+                                "spacing": "sm",
+                                "contents": [
+                                    {
+                                        "type": "text",
+                                        "text": "Lights",
+                                        "size": "xxl",
+                                        "weight": "bold"
+                                    },
+                                    {
+                                        "type": "box",
+                                        "layout": "baseline",
+                                        "contents": [
+                                            {
+                                                "type": "text",
+                                                "text": "Bedroom",
+                                                "flex": 0,
+                                                "margin": "sm",
+                                                "weight": "bold"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "text": `${roomSnapshot.val().bedroomLightStatus ? "ON" : "OFF"}`,
+                                                "size": "sm",
+                                                "align": "end",
+                                                "color": "#E08E60"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "box",
+                                        "layout": "baseline",
+                                        "contents": [
+                                            {
+                                                "type": "text",
+                                                "text": "Bathroom",
+                                                "flex": 0,
+                                                "margin": "sm",
+                                                "weight": "bold"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "text": `${roomSnapshot.val().bathroomLightStatus ? "ON" : "OFF"}`,
+                                                "size": "sm",
+                                                "align": "end",
+                                                "color": "#E08E60"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+            return client.pushMessage(roomSnapshot.val().user, msg)
+        }
+    }
+    return "done"
 }
 
 async function handleLightContrtoller(data, userId) {
@@ -71,22 +248,104 @@ async function handleLightContrtoller(data, userId) {
     const roomKey = userSnapshot.val().roomKey
     const roomRef = db.ref('rooms').child(roomKey)
     const status = data.status
-    switch(data.room) {
+    switch (data.room) {
         case 'BATHROOM': {
             await roomRef.child('bathroomLightStatus').transaction(currentStatus => status === "ON" ? true : false)
             break
         }
         case 'BEDROOM': {
-            await roomRef.child('bathroomLightStatus').transaction(currentStatus => status === "ON" ? true : false)
+            await roomRef.child('bedroomLightStatus').transaction(currentStatus => status === "ON" ? true : false)
             break
         }
     }
-    // const roomSnapshot = roomRef.once("value")
+    const roomSnapshot = await roomRef.once("value")
     const msg = {
-        type: 'text',
-        text: `Room: ${data.room}\nStatus: ${data.status}`
+        "type": "flex",
+        "altText": "Flex Message",
+        "contents": {
+            "type": "bubble",
+            "hero": {
+                "type": "image",
+                "url": "https://firebasestorage.googleapis.com/v0/b/seniority-line-bot.appspot.com/o/flex-messages-pics%2FHomeless-07.png?alt=media&token=4db4b8a7-e74e-44f8-99e3-67d443d7fdd3",
+                "margin": "none",
+                "size": "full",
+                "aspectRatio": "20:13",
+                "aspectMode": "cover",
+                "action": {
+                    "type": "uri",
+                    "label": "Action",
+                    "uri": "https://linecorp.com"
+                }
+            },
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "spacing": "md",
+                "contents": [
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "spacing": "sm",
+                        "contents": [
+                            {
+                                "type": "text",
+                                "text": "Lights",
+                                "size": "xxl",
+                                "weight": "bold"
+                            },
+                            {
+                                "type": "box",
+                                "layout": "baseline",
+                                "contents": [
+                                    {
+                                        "type": "text",
+                                        "text": "Bedroom",
+                                        "flex": 0,
+                                        "margin": "sm",
+                                        "weight": "bold"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "text": `${roomSnapshot.val().bedroomLightStatus ? "ON" : "OFF"}`,
+                                        "size": "sm",
+                                        "align": "end",
+                                        "color": "#E08E60"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "box",
+                                "layout": "baseline",
+                                "contents": [
+                                    {
+                                        "type": "text",
+                                        "text": "Bathroom",
+                                        "flex": 0,
+                                        "margin": "sm",
+                                        "weight": "bold"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "text": `${roomSnapshot.val().bathroomLightStatus ? "ON" : "OFF"}`,
+                                        "size": "sm",
+                                        "align": "end",
+                                        "color": "#E08E60"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
     }
     return client.pushMessage(userId, msg)
+}
+
+async function getRoomKeyByUserId(userId) {
+    const userRef = db.ref('users').child(userId)
+    const userSnapshot = await userRef.once("value")
+    return userSnapshot.val().roomKey
 }
 
 async function handleAirController(data, userId) {
@@ -98,20 +357,92 @@ async function handleAirController(data, userId) {
     console.log(data)
     console.log(data.status)
     console.log(data.temp)
-    if(data.status !== undefined) {
-        if(data.status === "ON")await roomRef.update({ airStatus: true })
+    if (data.status !== undefined) {
+        if (data.status === "ON") await roomRef.update({ airStatus: true })
         else await roomRef.update({ airStatus: false })
-    } else if(data.temp !== undefined) {
-        // const currentTemp = await roomRef.once("value").temp
-        if(data.temp === "UP")await roomRef.child('temp').transaction(currentTemp => currentTemp + 1)
+    } else if (data.temp !== undefined) {
+        if (data.temp === "UP") await roomRef.child('temp').transaction(currentTemp => currentTemp + 1)
         else await roomRef.child('temp').transaction(currentTemp => currentTemp - 1)
-    } 
+    }
     const roomSnapshot = await roomRef.once("value")
     const temp = roomSnapshot.val().temp
     const status = roomSnapshot.val().airStatus
     const msg = {
-        type: "text",
-        text: `Temperature: ${temp}\nStatus: ${status}`
+        "type": "flex",
+        "altText": "Flex Message",
+        "contents": {
+            "type": "bubble",
+            "direction": "ltr",
+            "hero": {
+                "type": "image",
+                "url": "https://firebasestorage.googleapis.com/v0/b/seniority-line-bot.appspot.com/o/flex-messages-pics%2FHomeless-06.png?alt=media&token=58776d7e-375d-41f2-b861-4413bec4f479",
+                "size": "full",
+                "aspectRatio": "20:13",
+                "aspectMode": "cover"
+            },
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "spacing": "md",
+                "contents": [
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "spacing": "sm",
+                        "contents": [
+                            {
+                                "type": "text",
+                                "text": "Air Conditioner",
+                                "size": "xxl",
+                                "align": "start",
+                                "gravity": "top",
+                                "weight": "bold",
+                                "color": "#2D2926"
+                            },
+                            {
+                                "type": "box",
+                                "layout": "baseline",
+                                "contents": [
+                                    {
+                                        "type": "text",
+                                        "text": "Temperature",
+                                        "margin": "sm",
+                                        "weight": "bold"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "text": `${temp}℃`,
+                                        "size": "sm",
+                                        "align": "end",
+                                        "color": "#E08E60"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "box",
+                                "layout": "baseline",
+                                "contents": [
+                                    {
+                                        "type": "text",
+                                        "text": "Status",
+                                        "flex": 0,
+                                        "margin": "sm",
+                                        "weight": "bold"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "text": `${status ? "ON" : "OFF"}`,
+                                        "size": "sm",
+                                        "align": "end",
+                                        "color": "#E08E60"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
     }
 
     return client.pushMessage(userId, msg)
@@ -146,15 +477,18 @@ async function handleDoorUnlock(userId) {
     return "done"
 }
 
-function handleNavigation(menu, userId) {
+async function handleNavigation(menu, userId) {
+    var roomKey = await getRoomKeyByUserId(userId)
     switch (menu) {
         case 'MAIN':
             return client.linkRichMenuToUser(userId, config.mainMenuId)
         case 'ROOM_CONTROLLER':
             return client.linkRichMenuToUser(userId, config.roomControllerMenuId)
         case 'LIGHT_CONTROLLER':
+            await sendStatusMessage(menu, roomKey)
             return client.linkRichMenuToUser(userId, config.lightControllerMenuId)
         case 'AIR_CONTROLLER':
+            await sendStatusMessage(menu, roomKey)
             return client.linkRichMenuToUser(userId, config.airControllerMenuId)
         default:
             return client.linkRichMenuToUser(userId, config.mainMenuId)
@@ -187,6 +521,6 @@ exports.unlockSuccess = functions.database.ref('rooms/{roomKey}/doorStatus').onU
     console.log("DoorStatus: " + doorStatus)
     console.log("RoomKey: " + roomKey)
 
-    await client.pushMessage(userId, {type: "text", text: `Door Status: Hello World`})
+    await client.pushMessage(userId, { type: "text", text: `Door Status: Hello World` })
     return Promise.resolve("Done")
 })
