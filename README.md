@@ -37,6 +37,10 @@ Homeless is the hotel room management integrated with Raspberry Pi, Google Assis
 * [Firebase Cloud functions (Realtime Database Background Trigger function)](https://github.com/arut-ji/smart-room-controlling-system/tree/master/background-trigger-com-or)
 * [Github Repository](https://github.com/arut-ji/com-or-rpi)
 
+### Architecture Flowchart
+
+![alt text](https://seniority-line-bot.firebaseapp.com/static/architecture.png)
+
 ## Authors
 * **Pasuta Paopun** 
 * **Arut Jinadit**
