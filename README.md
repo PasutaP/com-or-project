@@ -6,7 +6,7 @@ This is one of parts in the Computer Organisation and Assembly Programming proje
 
 ## What is Homeless?
 
-Homeless is the hotel management integrated with Raspberry Pi, Google Assistan and LINE Messaging API which covers these operations.
+Homeless is the hotel management integrated with Raspberry Pi, Google Assistant and LINE Messaging API which covers these operations.
 * Room Security - door unlocking via LINE
 * Room Controlling - lights and air conditioner controlling via LINE
 
